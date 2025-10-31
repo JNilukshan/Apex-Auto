@@ -10,32 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout code
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Setup Node for building frontend
+      # Step 2: Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      # Build frontend
+      # Step 3: Install & build frontend
       - name: Build frontend
         working-directory: frontend
         run: |
+          mkdir -p build
           npm install
           npm run build
 
-      # Zip build + backend
+      # Step 4: Prepare deployment package
       - name: Archive project files
         run: |
-          mkdir deploy
-          cp -r backend deploy/backend
-          cp -r frontend/build deploy/frontend
+          mkdir -p deploy/backend deploy/frontend
+          cp -r backend/* deploy/backend/
+          cp -r frontend/build/* deploy/frontend/
           cd deploy && tar -czf release.tar.gz backend frontend
 
-      # Copy build to EC2 using SSH
-      - name: Deploy to EC2 via SSH
+      # Step 5: Upload to EC2 via SCP
+      - name: Copy build to EC2
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -44,8 +46,8 @@ jobs:
           source: "deploy/release.tar.gz"
           target: "~/Apex-Auto/"
 
-      # SSH into EC2 to update app
-      - name: Run commands on EC2
+      # Step 6: SSH into EC2 and deploy
+      - name: Run deployment commands on EC2
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.EC2_HOST }}
