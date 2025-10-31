@@ -3,18 +3,16 @@ name: Deploy Apex Auto to EC2
 on:
   push:
     branches:
-      - master  # Runs only when pushing to master
+      - master  # Runs when pushing to master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repo (needed for Actions context)
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Deploy to EC2 via SSH
       - name: Deploy and setup on EC2
         uses: appleboy/ssh-action@v1.1.0
         with:
@@ -22,43 +20,48 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # === Update server ===
+            cd ~
+            echo "=== Updating server ==="
             sudo apt update -y && sudo apt upgrade -y
             sudo apt install -y nodejs npm nginx git
 
-            # === Clone or update repo ===
-            if [ ! -d "Apex-Auto" ]; then
+            echo "=== Cloning or updating repo ==="
+            if [ ! -d "Apex-Auto/.git" ]; then
+              rm -rf Apex-Auto
               git clone https://github.com/JNilukshan/Apex-Auto.git
             else
               cd Apex-Auto
+              git reset --hard
               git pull origin master
               cd ..
             fi
 
-            # === Backend setup ===
+            echo "=== Setting up backend ==="
             cd ~/Apex-Auto/backend
             npm install
 
-            # === Create or update .env ===
-            echo "PORT=5000" > .env
-            echo "MONGO_URI=${{ secrets.MONGODB_URI }}" >> .env
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "=== Creating .env ==="
+            cat <<EOF > .env
+            PORT=5000
+            MONGO_URI=${{ secrets.MONGODB_URI }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            EOF
 
-            # === Run backend with PM2 ===
+            echo "=== Running backend with PM2 ==="
             sudo npm install -g pm2
             pm2 stop apex-backend || true
             pm2 start server.js --name apex-backend
             pm2 save
             pm2 startup | sudo bash
 
-            # === Frontend setup ===
+            echo "=== Building frontend ==="
             cd ~/Apex-Auto/frontend
             npm install
             npm run build
 
-            # === Configure Nginx ===
+            echo "=== Configuring Nginx ==="
             sudo rm -f /etc/nginx/sites-enabled/default
-            cat <<EOF | sudo tee /etc/nginx/sites-available/apex-auto
+            cat <<'EOF' | sudo tee /etc/nginx/sites-available/apex-auto
             server {
                 listen 80;
                 server_name _;
@@ -67,20 +70,23 @@ jobs:
                 index index.html index.htm;
 
                 location / {
-                    try_files \$uri /index.html;
+                    try_files $uri /index.html;
                 }
 
                 location /api/ {
                     proxy_pass http://localhost:5000/;
                     proxy_http_version 1.1;
-                    proxy_set_header Upgrade \$http_upgrade;
+                    proxy_set_header Upgrade $http_upgrade;
                     proxy_set_header Connection 'upgrade';
-                    proxy_set_header Host \$host;
-                    proxy_cache_bypass \$http_upgrade;
+                    proxy_set_header Host $host;
+                    proxy_cache_bypass $http_upgrade;
                 }
             }
             EOF
 
             sudo ln -sf /etc/nginx/sites-available/apex-auto /etc/nginx/sites-enabled/apex-auto
+            sudo nginx -t
             sudo systemctl restart nginx
             sudo systemctl enable nginx
+
+            echo "✅ Deployment complete!"
