@@ -1,0 +1,60 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - master  # Trigger on push to master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Setup Node for building frontend
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # Build frontend
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm install
+          npm run build
+
+      # Zip build + backend
+      - name: Archive project files
+        run: |
+          mkdir deploy
+          cp -r backend deploy/backend
+          cp -r frontend/build deploy/frontend
+          cd deploy && tar -czf release.tar.gz backend frontend
+
+      # Copy build to EC2 using SSH
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          source: "deploy/release.tar.gz"
+          target: "~/Apex-Auto/"
+
+      # SSH into EC2 to update app
+      - name: Run commands on EC2
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/Apex-Auto
+            tar -xzf release.tar.gz
+            cd backend
+            npm install --omit=dev
+            pm2 restart apex-backend || pm2 start server.js --name apex-backend
+            sudo systemctl restart nginx
