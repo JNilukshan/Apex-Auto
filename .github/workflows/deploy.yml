@@ -1,62 +1,86 @@
-name: Deploy to EC2
+name: Deploy Apex Auto to EC2
 
 on:
   push:
     branches:
-      - master  # Trigger on push to master
+      - master  # Runs only when pushing to master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
-      - name: Checkout repo
+      # Step 1: Checkout repo (needed for Actions context)
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Setup Node.js
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      # Step 3: Install & build frontend
-      - name: Build frontend
-        working-directory: frontend
-        run: |
-          mkdir -p build
-          npm install
-          npm run build
-
-      # Step 4: Prepare deployment package
-      - name: Archive project files
-        run: |
-          mkdir -p deploy/backend deploy/frontend
-          cp -r backend/* deploy/backend/
-          cp -r frontend/build/* deploy/frontend/
-          cd deploy && tar -czf release.tar.gz backend frontend
-
-      # Step 5: Upload to EC2 via SCP
-      - name: Copy build to EC2
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
-          source: "deploy/release.tar.gz"
-          target: "~/Apex-Auto/"
-
-      # Step 6: SSH into EC2 and deploy
-      - name: Run deployment commands on EC2
+      # Step 2: Deploy to EC2 via SSH
+      - name: Deploy and setup on EC2
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd ~/Apex-Auto
-            tar -xzf release.tar.gz
-            cd backend
-            npm install --omit=dev
-            pm2 restart apex-backend || pm2 start server.js --name apex-backend
+            # === Update server ===
+            sudo apt update -y && sudo apt upgrade -y
+            sudo apt install -y nodejs npm nginx git
+
+            # === Clone or update repo ===
+            if [ ! -d "Apex-Auto" ]; then
+              git clone https://github.com/JNilukshan/Apex-Auto.git
+            else
+              cd Apex-Auto
+              git pull origin master
+              cd ..
+            fi
+
+            # === Backend setup ===
+            cd ~/Apex-Auto/backend
+            npm install
+
+            # === Create or update .env ===
+            echo "PORT=5000" > .env
+            echo "MONGO_URI=${{ secrets.MONGODB_URI }}" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+
+            # === Run backend with PM2 ===
+            sudo npm install -g pm2
+            pm2 stop apex-backend || true
+            pm2 start server.js --name apex-backend
+            pm2 save
+            pm2 startup | sudo bash
+
+            # === Frontend setup ===
+            cd ~/Apex-Auto/frontend
+            npm install
+            npm run build
+
+            # === Configure Nginx ===
+            sudo rm -f /etc/nginx/sites-enabled/default
+            cat <<EOF | sudo tee /etc/nginx/sites-available/apex-auto
+            server {
+                listen 80;
+                server_name _;
+
+                root /home/ubuntu/Apex-Auto/frontend/build;
+                index index.html index.htm;
+
+                location / {
+                    try_files \$uri /index.html;
+                }
+
+                location /api/ {
+                    proxy_pass http://localhost:5000/;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade \$http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host \$host;
+                    proxy_cache_bypass \$http_upgrade;
+                }
+            }
+            EOF
+
+            sudo ln -sf /etc/nginx/sites-available/apex-auto /etc/nginx/sites-enabled/apex-auto
             sudo systemctl restart nginx
+            sudo systemctl enable nginx
