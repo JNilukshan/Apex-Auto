@@ -3,7 +3,7 @@ name: Deploy Apex Auto to EC2
 on:
   push:
     branches:
-      - master  # Runs when pushing to master
+      - master
 
 jobs:
   deploy:
@@ -20,34 +20,32 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
+            set -e
             cd ~
-            echo "=== Updating server ==="
-            sudo apt update -y && sudo apt upgrade -y
-            sudo apt install -y nodejs npm nginx git
 
-            echo "=== Cloning or updating repo ==="
-            if [ ! -d "Apex-Auto/.git" ]; then
-              rm -rf Apex-Auto
-              git clone https://github.com/JNilukshan/Apex-Auto.git
-            else
-              cd Apex-Auto
-              git reset --hard
-              git pull origin master
-              cd ..
-            fi
+            echo "=== Updating server ==="
+            sudo apt update -y && sudo apt install -y nodejs npm nginx git
+
+            echo "=== Cleaning previous deployment ==="
+            sudo rm -rf ~/Apex-Auto
+            sudo mkdir -p ~/Apex-Auto
+            sudo chown -R ubuntu:ubuntu ~/Apex-Auto
+
+            echo "=== Cloning latest code ==="
+            git clone https://github.com/JNilukshan/Apex-Auto.git
 
             echo "=== Setting up backend ==="
             cd ~/Apex-Auto/backend
             npm install
 
-            echo "=== Creating .env ==="
+            echo "=== Writing .env ==="
             cat <<EOF > .env
             PORT=5000
             MONGO_URI=${{ secrets.MONGODB_URI }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             EOF
 
-            echo "=== Running backend with PM2 ==="
+            echo "=== Starting backend with PM2 ==="
             sudo npm install -g pm2
             pm2 stop apex-backend || true
             pm2 start server.js --name apex-backend
@@ -89,4 +87,4 @@ jobs:
             sudo systemctl restart nginx
             sudo systemctl enable nginx
 
-            echo "✅ Deployment complete!"
+            echo "✅ Deployment completed successfully!"
