@@ -63,7 +63,7 @@ export const loginUser = async (req, res) => {
       user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (err) {
-    console.error("❌ Login Error:", err);
+    console.error("Login Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -78,7 +78,7 @@ export const getProfile = async (req, res) => {
 
     res.json(user);
   } catch (err) {
-    console.error("❌ Profile Error:", err);
+    console.error("Profile Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
