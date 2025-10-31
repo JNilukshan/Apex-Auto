@@ -64,7 +64,7 @@ jobs:
                 listen 80;
                 server_name _;
 
-                root /home/ubuntu/Apex-Auto/frontend/build;
+                root /home/ubuntu/Apex-Auto/frontend/dist;
                 index index.html index.htm;
 
                 location / {
