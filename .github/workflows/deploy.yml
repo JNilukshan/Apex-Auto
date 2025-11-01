@@ -69,14 +69,10 @@ jobs:
             cat <<'EOF' | sudo tee /etc/nginx/sites-available/apex-auto
             server {
                 listen 80;
-                server_name _;
+                server_name apexauto.duckdns.org;
 
                 root /home/ubuntu/Apex-Auto/frontend/dist;
                 index index.html index.htm;
-
-                location / {
-                    try_files $uri /index.html;
-                }
 
                 location /api/ {
                     proxy_pass http://localhost:5000/;
@@ -85,6 +81,10 @@ jobs:
                     proxy_set_header Connection 'upgrade';
                     proxy_set_header Host $host;
                     proxy_cache_bypass $http_upgrade;
+                }
+
+                location / {
+                    try_files $uri /index.html;
                 }
             }
             EOF
