@@ -2,14 +2,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-// ==========================
 // 🔹 Register User
-// ==========================
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ message: "Email already registered." });
@@ -31,14 +28,12 @@ export const registerUser = async (req, res) => {
       user: { id: newUser._id, name: newUser.name, email: newUser.email },
     });
   } catch (err) {
-    console.error("❌ Register Error:", err);
+    console.error("Register Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
 
-// ==========================
 // 🔹 Login User
-// ==========================
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -68,9 +63,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// ==========================
 // 🔹 Get Logged-In User Profile
-// ==========================
 export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-passwordHash");
