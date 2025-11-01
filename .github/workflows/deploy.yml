@@ -39,7 +39,7 @@ jobs:
             npm install
 
             echo "=== Writing backend .env ==="
-            cat <<EOF > .env
+            cat <<EOF > ~/Apex-Auto/backend/.env
             PORT=5000
             MONGODB_URI=${{ secrets.MONGODB_URI }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
@@ -57,7 +57,7 @@ jobs:
             npm install
 
             echo "=== Writing frontend .env ==="
-            cat <<EOF > .env
+            cat <<EOF > ~/Apex-Auto/frontend/.env
             VITE_API_URL=${{ secrets.VITE_API_URL }}
             EOF
 
