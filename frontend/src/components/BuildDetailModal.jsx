@@ -4,31 +4,31 @@ export default function BuildDetailModal({ build, onClose }) {
   
   return (
     <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm"
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl p-8 w-full max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 w-full max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto"
       >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center sm:text-left">
             {build.carModel?.brand} {build.carModel?.model} ({build.carModel?.year})
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition"
+            className="text-gray-400 hover:text-gray-600 text-2xl w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition self-center sm:self-auto"
           >
             ✕
           </button>
         </div>
 
         {/* Car Image with Color Overlay */}
-        <div className="relative mb-6">
+        <div className="relative mb-4 sm:mb-6">
           <img
             src="https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1200"
             alt={`${build.carModel?.brand} ${build.carModel?.model}`}
-            className="rounded-2xl w-full h-64 object-cover"
+            className="rounded-2xl w-full h-48 sm:h-64 object-cover"
           />
           <div
             className="absolute inset-0 mix-blend-multiply opacity-30 rounded-2xl"
@@ -37,12 +37,12 @@ export default function BuildDetailModal({ build, onClose }) {
         </div>
 
         {/* Car Details */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">
+        <div className="mb-4 sm:mb-6">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3 text-center sm:text-left">
             Vehicle Details
           </h3>
           <div className="bg-gray-50 rounded-xl p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-gray-600 text-sm mb-1">Brand</div>
                 <div className="font-semibold text-black">{build.carModel?.brand}</div>
@@ -66,12 +66,12 @@ export default function BuildDetailModal({ build, onClose }) {
         </div>
 
         {/* Selected Parts */}
-        <div className="space-y-4 mb-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-bold text-gray-900">
+        <div className="space-y-4 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <h3 className="text-lg font-bold text-gray-900 text-center sm:text-left">
               Added Parts ({build.selectedParts?.length || 0} items)
             </h3>
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium text-center">
               Total: LKR {totalPrice.toLocaleString()}
             </div>
           </div>
@@ -80,21 +80,21 @@ export default function BuildDetailModal({ build, onClose }) {
           {build.selectedParts && build.selectedParts.length > 0 ? (
             <div className="space-y-3">
               {build.selectedParts.map((part, index) => (
-                <div key={index} className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start">
+                <div key={index} className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-md transition-shadow">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
                           {index + 1}
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-gray-900 text-lg">{part.name}</h4>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-semibold text-gray-900 text-base sm:text-lg truncate">{part.name}</h4>
                           <p className="text-sm text-gray-500">Service ID: {part.serviceId}</p>
                         </div>
                       </div>
                     </div>
-                    <div className="text-right ml-4">
-                      <div className="text-xl font-bold text-gray-900">
+                    <div className="text-center sm:text-right sm:ml-4">
+                      <div className="text-lg sm:text-xl font-bold text-gray-900">
                         LKR {part.price.toLocaleString()}
                       </div>
                     </div>
@@ -103,7 +103,7 @@ export default function BuildDetailModal({ build, onClose }) {
               ))}
             </div>
           ) : (
-            <div className="bg-gray-50 rounded-xl p-8 text-center">
+            <div className="bg-gray-50 rounded-xl p-6 sm:p-8 text-center">
               <div className="text-gray-400 text-4xl mb-3">📦</div>
               <div className="text-gray-500 text-lg font-medium mb-1">No parts added yet</div>
               <div className="text-gray-400 text-sm">Start building your custom car by adding parts</div>
@@ -113,14 +113,14 @@ export default function BuildDetailModal({ build, onClose }) {
           {/* Summary */}
           {build.selectedParts && build.selectedParts.length > 0 && (
             <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-4 border border-blue-200">
-              <div className="flex justify-between items-center">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div className="text-center sm:text-left">
                   <div className="text-sm text-gray-600 mb-1">Build Summary</div>
                   <div className="text-lg font-bold text-gray-900">
                     {build.selectedParts.length} parts • LKR {totalPrice.toLocaleString()}
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-center sm:text-right">
                   <div className="text-sm text-gray-600 mb-1">Average per part</div>
                   <div className="text-lg font-semibold text-gray-700">
                     LKR {Math.round(totalPrice / build.selectedParts.length).toLocaleString()}
@@ -131,7 +131,7 @@ export default function BuildDetailModal({ build, onClose }) {
           )}
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={onClose}
             className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 transition font-medium"

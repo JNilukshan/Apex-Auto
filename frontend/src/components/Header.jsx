@@ -4,14 +4,14 @@ export default function Header({ onNavigate }) {
   return (
     <header className="flex flex-col bg-gray-100">
       {/* 🔹 Top Content */}
-      <div className="flex justify-between items-center px-8 py-4">
+      <div className="flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4">
         {/* 🔹 Left - APEX Logo */}
         <button
           onClick={() => onNavigate && onNavigate("home")}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
         >
           <div className="w-3 h-3 bg-cyan-400 rounded-sm"></div>
-          <span className="text-2xl font-bold text-gray-900">APEX</span>
+          <span className="text-xl sm:text-2xl font-bold text-gray-900">APEX</span>
         </button>
 
         {/* 🔹 Right - Notification Bell */}
